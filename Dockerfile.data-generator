@@ -1,0 +1,40 @@
+FROM python:3.9-slim
+
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install wait-for-it
+RUN curl -o /usr/local/bin/wait-for-it.sh \
+    https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh && \
+    chmod +x /usr/local/bin/wait-for-it.sh
+
+# Copy and install requirements
+COPY requirements-base.txt .
+RUN pip install --no-cache-dir -r requirements-base.txt
+
+# Copy application code
+COPY config/ ./config/
+COPY shared/ ./shared/
+COPY services/data_generator.py ./services/data_generator.py
+COPY services/__init__.py ./services/__init__.py
+COPY run_data_generator.py .
+
+# Create non-root user
+RUN useradd --create-home --shell /bin/bash soc-user && \
+    chown -R soc-user:soc-user /app
+USER soc-user
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import sys; sys.exit(0)"
+
+# Fixed start command
+CMD ["/usr/local/bin/wait-for-it.sh", "kafka:29092", "--timeout=60", "--", "python", "run_data_generator.py"]

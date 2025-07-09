@@ -1,0 +1,10 @@
+kafka-python==2.0.2
+clickhouse-driver==0.2.6
+redis==4.6.0
+pyyaml==6.0
+python-dotenv==1.0.0
+requests==2.31.0
+prometheus-client==0.17.1
+schedule==1.2.0
+numpy==1.24.3
+psutil==7.0.0
