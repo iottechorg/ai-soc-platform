@@ -12,20 +12,16 @@
 
 2. **Deploy Platform**
    ```bash
-   make deploy
-   # OR
-   bash scripts/deploy.sh
+   make start
    ```
 
 3. **Access Services**
    - Dashboard: http://localhost:8501
-   - Grafana: http://localhost:3000 (admin/admin123)
-   - Prometheus: http://localhost:9090
 
 ## Management Commands
 
 - `make build` - Build all images
-- `make start` - Start services
+- `make start` - Build all images and start services
 - `make stop` - Stop services
 - `make logs` - View logs
 - `make health` - Health check
@@ -95,8 +91,6 @@ deploy:
 
 ## Monitoring
 
-- **Grafana**: http://localhost:3000
-- **Prometheus**: http://localhost:9090
 - **ClickHouse**: http://localhost:8124
 - **Streamlit**: http://localhost:8501
 
