@@ -1,5 +1,15 @@
 # enhanced_data_generator.py - Realistic threat distribution for balanced ML training
 
+"""
+The EnhancedSyntheticDataGenerator class is the core engine of this script. It encapsulates all the logic 
+for creating realistic security logs. It defines the various threat and normal traffic patterns, 
+manages the state of persistent attackers over time, and uses probabilistic and time-based models 
+to generate a mixed stream of data that mimics real-world network activity. 
+This class is responsible for everything from crafting an individual log entry to generating large 
+batches and tracking statistics, but it is not responsible for the external integration (like connecting to Kafka),
+which is handled by the EnhancedDataGeneratorRunner.
+
+"""
 import random
 import time
 import logging

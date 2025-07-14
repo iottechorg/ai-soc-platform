@@ -1,0 +1,53 @@
+---
+config:
+  layout: elk
+  theme: neo
+---
+classDiagram
+    direction LR
+    class EnhancedDataGeneratorRunner {
+        +config: Dict
+        +generator: EnhancedSyntheticDataGenerator
+        +kafka_client: KafkaClient
+        +start()
+        +stop()
+        +get_status()
+    }
+    class EnhancedSyntheticDataGenerator {
+        +config: Dict
+        +threat_patterns: List~EnhancedThreatPattern~
+        +normal_profiles: List~TrafficProfile~
+        +known_threat_sources: Dict
+        +running: bool
+        +start_enhanced_continuous_generation(kafka_client, topic)
+        +generate_enhanced_batch(batch_size): List
+        +stop()
+        -_generate_enhanced_threat_log(pattern)
+        -_generate_enhanced_normal_log()
+        -_generate_realistic_ip(pattern)
+    }
+    class EnhancedThreatPattern {
+        <<Dataclass>>
+        +name: str
+        +base_probability: float
+        +indicators: List
+        +persistence: float
+        +temporal_patterns: Dict
+    }
+    class TrafficProfile {
+        <<Dataclass>>
+        +name: str
+        +probability: float
+        +port_range: tuple
+        +protocols: List
+    }
+    class KafkaClient {
+        <<External>>
+        +send_message(topic, message)
+    }
+    note for EnhancedDataGeneratorRunner "Orchestrates the whole process: loads config, initializes generator and Kafka client, and manages start/stop."
+    EnhancedDataGeneratorRunner "1" *-- "1" EnhancedSyntheticDataGenerator : creates and owns
+    EnhancedDataGeneratorRunner "1" *-- "1" KafkaClient : creates and owns
+    EnhancedSyntheticDataGenerator "1" *-- "1..*" EnhancedThreatPattern : contains templates
+    EnhancedSyntheticDataGenerator "1" *-- "1..*" TrafficProfile : contains templates
+    EnhancedSyntheticDataGenerator ..> KafkaClient : uses to send logs

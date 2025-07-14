@@ -1,0 +1,55 @@
+---
+config:
+  look: neo
+  layout: fixed
+  theme: redux
+---
+flowchart TB
+ subgraph subGraph0["Data Generation Layer"]
+        DG["Enhanced Data Generator<br>🎯 Realistic Threats<br>📊 95% Normal, 5% Threats<br>⏰ Temporal Patterns"]
+  end
+ subgraph subGraph1["Infrastructure Layer"]
+        K["Kafka<br>📨 Message Streaming<br>🔄 Topics: raw-logs, anomaly-scores, alerts"]
+        CH[("ClickHouse<br>📊 Analytics Database<br>⚡ High Performance")]
+  end
+ subgraph subGraph2["ML Models"]
+        IF["Isolation Forest<br>🌲 Contamination: 0.06"]
+        CL["Clustering<br>🎯 8 Clusters"]
+        FR["Forbidden Ratio<br>📊 Adaptive Windows"]
+  end
+ subgraph subGraph3["ML Processing Layer"]
+        ML["ML Pipeline<br>🤖 3 Enhanced Models<br>🎯 Adaptive Thresholds<br>📈 Score Normalization"]
+        subGraph2
+  end
+ subgraph subGraph4["Intelligence Layer"]
+        RL["RL Orchestrator<br>🧠 PPO Agent<br>⚡ Auto-Optimization<br>🔄 Model Selection"]
+        SE["Scoring Engine<br>🎯 Multi-Model Aggregation<br>📊 Adaptive Thresholds<br>🚨 Smart Alerting"]
+  end
+ subgraph subGraph5["Alert Channels"]
+        SL["Slack<br>💬 Rich Formatting"]
+        EM["Email<br>📧 HTML Templates"]
+        WH["Webhook<br>🔗 JSON Payloads"]
+  end
+ subgraph subGraph6["Response Layer"]
+        AS["Alerting Service<br>📨 Multi-Channel<br>🔄 Deduplication<br>⏱️ Rate Limiting"]
+        subGraph5
+  end
+ subgraph subGraph7["Monitoring Layer"]
+        DB["Dashboard<br>📊 Real-time Monitoring<br>📈 4 Interactive Tabs<br>🔍 Live Analytics"]
+  end
+    DG -- Raw Security Logs --> K
+    K -- Consume Logs --> ML
+    ML --> IF & CL & FR
+    ML -- Store Logs --> CH
+    ML -- Anomaly Scores --> K
+    K -- Consume Scores --> SE
+    RL -- Monitor & Control --> ML
+    SE -- Alerts --> K
+    K -- Consume Alerts --> AS
+    AS --> SL & EM & WH
+    CH -- Query Data --> DB
+    style subGraph3 fill:#C8E6C9
+    style subGraph4 fill:#FFE0B2
+    style subGraph7 fill:#E1BEE7
+    style subGraph6 fill:#FFCDD2
+    style subGraph0 fill:#BBDEFB

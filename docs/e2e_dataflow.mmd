@@ -1,0 +1,32 @@
+sequenceDiagram
+    participant DG as 🎯 Data Generator
+    participant K as 📨 Kafka
+    participant ML as 🤖 ML Pipeline
+    participant CH as 💾 ClickHouse
+    participant RL as 🧠 RL Orchestrator
+    participant SE as 🎯 Scoring Engine
+    participant AS as 📢 Alerting Service
+    participant SL as 💬 Slack
+    participant DB as 📊 Dashboard
+    Note over DG,DB: Enhanced SOC Platform - Real-time Threat Detection & Response
+    DG->>K: Generate realistic security logs<br/>📊 95% normal, 5% threats
+    K->>ML: Consume raw logs<br/>📦 Batch processing
+    ML->>CH: Store raw logs<br/>💾 Structured data
+    ML->>ML: Enhanced ML Models Process<br/>🌲 Isolation Forest<br/>🎯 Clustering<br/>📈 Forbidden Ratio
+    ML->>K: Publish anomaly scores<br/>📊 topic: anomaly-scores
+    
+    RL->>ML: Monitor performance<br/>📊 Precision, recall, F1
+    RL->>ML: Optimize model selection<br/>⚙️ Enable/disable models
+    
+    K->>SE: Consume anomaly scores<br/>📊 Multi-model predictions
+    SE->>SE: Aggregate scores<br/>⚖️ 4 aggregation methods
+    SE->>SE: Smart Alert Generation<br/>🧠 7 enhanced rules
+    
+    alt Alert Generated
+        SE->>K: Publish alert<br/>🚨 topic: alerts
+        K->>AS: Consume alert<br/>📨 Enhanced processing
+        AS->>SL: Rich Slack alert<br/>💬 Attachments, colors
+    end
+    
+    CH->>DB: Query live data<br/>📊 Real-time analytics
+    DB->>DB: Update dashboard<br/>🔄 30-second refresh

@@ -1,0 +1,34 @@
+sequenceDiagram
+    participant Kafka
+    participant Runner
+    participant ScoringEngine
+    participant ThresholdManager
+
+    Kafka->>Runner: 1. Sends anomaly score message
+    Runner->>Runner: 2. Buffers score for the entity
+    
+    loop Until Entity is Ready
+        Runner->>Runner: 3. Waits for more scores or timeout
+    end
+
+    Runner->>ScoringEngine: 4. aggregate_scores(entity_scores)
+    ScoringEngine->>ThresholdManager: 5. get_current_thresholds()
+    ThresholdManager-->>ScoringEngine: 6. Returns current thresholds {high: 0.82, ...}
+    ScoringEngine->>ScoringEngine: 7. Calculates final weighted & smoothed score
+    ScoringEngine-->>Runner: 8. Returns comprehensive scoring_result
+    
+    Note over Runner,ScoringEngine: The Runner now has the final score.
+    
+    Runner->>ScoringEngine: 9. should_generate_alert(scoring_result)
+    ScoringEngine->>ScoringEngine: 10. Applies fine-tuned rules
+    ScoringEngine-->>Runner: 11. Returns True or False
+
+    alt If Alert is True
+        Runner->>Kafka: 12. Publishes enriched alert to 'alerts' topic
+    end
+
+    loop Periodically (e.g., every minute)
+        ScoringEngine->>ScoringEngine: 13. Collects history of final scores
+        ScoringEngine->>ThresholdManager: 14. update_score_history(scores)
+        ThresholdManager->>ThresholdManager: 15. Calibrates thresholds up or down
+    end

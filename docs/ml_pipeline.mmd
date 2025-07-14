@@ -1,0 +1,55 @@
+---
+config:
+  layout: elk
+  theme: redux
+  look: classic
+---
+classDiagram
+    direction LR
+    subgraph ML_Pipeline_Core
+        direction TB
+        class MLPipeline {
+            +ml_manager: MLModelManager
+            +kafka_client: KafkaClient
+            +db: ClickHouseClient
+            +start()
+            +_process_raw_log(log)
+            +_process_batch_now()
+        }
+        class KafkaClient {
+            +send_message()
+            +create_consumer()
+        }
+        class ClickHouseClient {
+            +connect()
+            +insert_raw_logs()
+            +insert_anomaly_scores()
+        }
+    end
+    subgraph ML_Model_System
+        direction TB
+        class MLModelManager {
+            +models: dict~BaseMLModel~
+            +train_models()
+            +predict_all(log)
+        }
+        class BaseMLModel {
+            <<Abstract>>
+            +name: str
+            +train()
+            +predict()
+        }
+        class EnhancedIsolationForest
+        class EnhancedClusteringModel
+        class EnhancedForbiddenRatioModel
+        class AdaptiveThresholdManager
+    end
+    MLPipeline "1" *-- "1" MLModelManager : uses
+    MLPipeline "1" *-- "1" KafkaClient : uses
+    MLPipeline "1" *-- "1" ClickHouseClient : uses
+    MLModelManager "1" o-- "0..*" BaseMLModel : manages
+    BaseMLModel <|-- EnhancedIsolationForest
+    BaseMLModel <|-- EnhancedClusteringModel
+    BaseMLModel <|-- EnhancedForbiddenRatioModel
+    BaseMLModel "1" *-- "1" AdaptiveThresholdManager
+    MLModelManager "1" *-- "1" AdaptiveThresholdManager
