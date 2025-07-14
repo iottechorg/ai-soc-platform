@@ -1,0 +1,41 @@
+---
+config:
+  layout: elk
+---
+flowchart LR
+ subgraph Input["Input"]
+        A@{ label: "Kafka Topic: 'alerts'" }
+  end
+ subgraph subGraph1["Alert Processing Pipeline"]
+        C{"2 Is it a Duplicate?"}
+        D{"3.Is it Rate-Limited?"}
+        E["4.Format Message using Templates"]
+        F{"5.Route: Which Channels?"}
+        G["6.Send to Channels (Slack, Email, etc.)"]
+  end
+ subgraph subGraph2["Alerting Service"]
+    direction RL
+        B["1.Consume Alert & Add to Queue"]
+        subGraph1
+        H["Update Metrics & Caches"]
+  end
+ subgraph Output["Output"]
+        I["Slack Channel"]
+        J["Email Inbox"]
+        K["Webhook Endpoint"]
+  end
+    A --> B
+    B --> C
+    C -- Yes --> H
+    C -- No --> D
+    D -- Yes --> H
+    D -- No --> E
+    E --> F
+    F -- "e.g., 'critical' -> Slack, Email" --> G
+    G --> I & J & K & H
+    A@{ shape: rect}
+    style A fill:#e3f2fd,stroke:#333
+    style H fill:#fff9c4,stroke:#333
+    style I fill:#e8f5e9,stroke:#333
+    style J fill:#e8f5e9,stroke:#333
+    style K fill:#e8f5e9,stroke:#333

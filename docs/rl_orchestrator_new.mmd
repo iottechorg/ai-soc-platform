@@ -1,0 +1,36 @@
+sequenceDiagram
+    participant Runner as run_orchestrator.py
+    participant Orchestrator as RLOrchestrator
+    participant Environment as SOCEnvironment
+    participant MLManager
+
+    Runner->>Orchestrator: 1. start()
+    Orchestrator->>Orchestrator: 2. Starts background orchestration_loop()
+
+    loop Every 30 seconds
+        Orchestrator->>Orchestrator: 3. _make_rl_decision()
+        Orchestrator->>Environment: 4. _get_current_state()
+        Environment->>MLManager: 5. get_model_status()
+        MLManager-->>Environment: 6. Returns model performance (F1, etc.)
+        Environment-->>Orchestrator: 7. Returns current state vector
+
+        Orchestrator->>Orchestrator: 8. agent.predict(state)
+        Note over Orchestrator: PPO Agent decides which models to enable/disable.
+        Orchestrator->>Environment: 9. step(action)
+        Environment->>MLManager: 10. enable_model() / disable_model()
+        
+        Note over Environment: The environment now calculates the reward.
+        Environment->>Environment: 11. _calculate_reward()
+        Environment-->>Orchestrator: 12. Returns (next_state, reward, done, info)
+
+        Orchestrator->>Orchestrator: 13. Logs the decision and reward
+        
+        Note over Orchestrator: The agent now learns from this single step.
+        Orchestrator->>Orchestrator: 14. _update_learning() -> agent.learn()
+    end
+
+    loop Periodically from another thread
+        Runner->>Runner: 15. Collects system metrics (CPU, memory)
+        Runner->>Orchestrator: 16. update_system_metrics(metrics)
+        Orchestrator->>Environment: 17. Updates its internal state with new metrics
+    end

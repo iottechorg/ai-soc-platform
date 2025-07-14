@@ -1,0 +1,41 @@
+sequenceDiagram
+    participant Runner as AlertingServiceRunner
+    participant Kafka as KafkaClient
+    participant Service as AlertingService
+    participant Alerter as (Slack/Email/etc)
+
+    Runner->>Kafka: 1. create_consumer(topic='alerts')
+    
+    loop Forever
+        Kafka->>Runner: 2. Receives raw alert message
+        Runner->>Service: 3. send_alert(alert_data)
+        Service->>Service: 4. Adds alert to internal queue
+    end
+
+    loop In a background thread
+        Service->>Service: 5. Pops an alert from the queue
+        
+        Note over Service: --- Start Processing Pipeline ---
+        
+        Service->>Service: 6. _is_duplicate_enhanced()?
+        alt If Duplicate
+            Service->>Service: 7a. Updates 'deduplicated' metric & stops
+        else Not Duplicate
+            Service->>Service: 7b. _is_rate_limited_enhanced()?
+            alt If Rate-Limited
+                Service->>Service: 8a. Updates 'rate_limited' metric & stops
+            else Not Rate-Limited
+                Service->>Service: 8b. _format_enhanced_alert_message()
+                Service->>Service: 9. _determine_enhanced_channels()
+                
+                loop For each selected channel
+                    Service->>Alerter: 10. channel.send_alert(message, data)
+                    Alerter->>Alerter: 11. Makes external API call (e.g., to Slack)
+                    Alerter-->>Service: 12. Returns success or failure
+                end
+                
+                Service->>Service: 13. Updates metrics (sent_alerts, failures)
+                Service->>Service: 14. Updates deduplication & rate-limit caches
+            end
+        end
+    end

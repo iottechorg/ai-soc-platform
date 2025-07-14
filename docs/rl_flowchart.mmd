@@ -1,0 +1,31 @@
+---
+config:
+  layout: elk
+---
+flowchart LR
+ subgraph subGraph0["RL_Environment"]
+        A["Current State"]
+        B{"Reward Calculation"}
+        C["System & Model Metrics"]
+  end
+ subgraph subGraph1["RL_Agent"]
+        D["PPO Agent"]
+        E["Predict Action"]
+        F["Learn from Experience"]
+  end
+ subgraph System["System"]
+        G["ML Models"]
+        H["System Resources"]
+  end
+    A -- "1.Observe Current State" --> D
+    D -- "2.Decide on an Action" --> E
+    E -- "3.Execute Action" --> G
+    G -- "4.Affects Detection Performance" --> C
+    H -- "5.Affects Resource Usage" --> C
+    C -- "6.Measure Outcome" --> B
+    B -- "7.Calculate Reward" --> F
+    F -- "8.Update Brain with Experience" --> D
+    C -- "9.Generate Next State" --> A
+    classDef rl-agent fill:#e3f2fd,stroke:#333,stroke-width:2px
+    classDef rl-env fill:#e8f5e9,stroke:#333,stroke-width:2px
+    classDef system fill:#fbe9e7,stroke:#333,stroke-width:2px

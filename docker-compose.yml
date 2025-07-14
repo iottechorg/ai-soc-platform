@@ -1,0 +1,202 @@
+services:
+  # Base image build definition
+  base:
+    image: soc-platform-base:latest
+    build:
+      context: .
+      dockerfile: ./services/common/Dockerfile.base
+    
+  # --- Infrastructure Services ---
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    hostname: zookeeper
+    container_name: soc-zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+    networks:
+      - soc-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    hostname: kafka
+    container_name: soc-kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "29092:29092"
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - soc-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: soc-clickhouse
+    hostname: clickhouse
+    ports:
+      - "8124:8123" # HTTP
+      - "9000:9000" # Native TCP
+    environment:
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-secure_password}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./infra/clickhouse/config.xml:/etc/clickhouse-server/config.d/config.xml # Mount custom config
+    networks:
+      - soc-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8123/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # --- Application Services ---
+  data-generator:
+    image: soc-platform/data-generator:latest
+    container_name: soc-data-generator
+    build:
+      context: .
+      dockerfile: ./services/data_generator/Dockerfile
+    depends_on:
+      base:
+        condition: service_completed_successfully
+      kafka:
+        condition: service_healthy
+    env_file:
+      - .env
+    networks:
+      - soc-network
+    restart: unless-stopped
+
+  ml-pipeline:
+    image: soc-platform/ml-pipeline:latest
+    container_name: soc-ml-pipeline
+    build:
+      context: .
+      dockerfile: ./services/ml_pipeline/Dockerfile
+    depends_on:
+      base:
+        condition: service_completed_successfully
+      kafka:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    networks:
+      - soc-network
+    restart: unless-stopped
+
+  orchestrator:
+    image: soc-platform/orchestrator:latest
+    container_name: soc-orchestrator
+    build:
+      context: .
+      dockerfile: ./services/orchestrator/Dockerfile
+    depends_on:
+      base:
+        condition: service_completed_successfully
+      ml-pipeline:
+        condition: service_started
+    env_file:
+      - .env
+    networks:
+      - soc-network
+    restart: unless-stopped
+
+  scoring-engine:
+    image: soc-platform/scoring-engine:latest
+    container_name: soc-scoring-engine
+    build:
+      context: .
+      dockerfile: ./services/scoring_engine/Dockerfile
+    depends_on:
+      base:
+        condition: service_completed_successfully
+      kafka:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    env_file:
+      - .env
+    networks:
+      - soc-network
+    restart: unless-stopped
+
+  alerting:
+    image: soc-platform/alerting:latest
+    container_name: soc-alerting
+    build:
+      context: .
+      dockerfile: ./services/alerting/Dockerfile
+    depends_on:
+      base:
+        condition: service_completed_successfully
+      kafka: 
+        condition: service_healthy
+    env_file:
+      - .env
+    networks:
+      - soc-network
+    restart: unless-stopped
+
+  dashboard:
+    image: soc-platform/dashboard:latest
+    container_name: soc-dashboard
+    build:
+      context: .
+      dockerfile: ./services/dashboard/Dockerfile
+    
+    depends_on:
+      base:
+        condition: service_completed_successfully
+      clickhouse:
+        condition: service_healthy
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    networks:
+      - soc-network
+    restart: unless-stopped
+
+volumes:
+  zookeeper_data:
+  kafka_data:
+  clickhouse_data:
+
+
+networks:
+  soc-network:
+    driver: bridge

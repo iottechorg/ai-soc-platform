@@ -1,0 +1,61 @@
+---
+config:
+  layout: elk
+---
+flowchart TD
+ subgraph Input["Input"]
+        A["raw_log: Dict"]
+  end
+ subgraph Feature_Engineering_Process["Feature Extraction and Transformation"]
+        P1("Normalize Port / 65535.0<br><i>(1 feature)</i>")
+        P2{"Port Category?"}
+        P3(["1,0,0"])
+        P4(["0,1,0"])
+        P5(["0,0,1"])
+        P_Out("Port Category Features<br><i>(3 features)</i>")
+        C1("One-Hot Encode Protocol<br><i>(5 features)</i>")
+        C2("One-Hot Encode Severity<br><i>(5 features)</i>")
+        T1("Normalize Indicator Count<br><i>(1 feature)</i>")
+        T2("Generate Specific Threat Flags<br>- brute_force<br>- suspicious_source<br>- malware<br>- data_exfiltration<br><i>(4 features)</i>")
+        TS1("Extract Hour, Weekday")
+        TS2("Normalize Hour &amp; Weekday<br><i>(2 features)</i>")
+        TS3("Create Cyclic Hour Features<br>sin(hour), cos(hour)<br><i>(2 features)</i>")
+        N1("Check if Private IP<br><i>(1 feature)</i>")
+        N2("Calculate IP Entropy<br><i>(1 feature)</i>")
+        V1("Log-Normalize Bytes<br><i>(1 feature)</i>")
+        V2("Normalize Duration<br><i>(1 feature)</i>")
+  end
+ subgraph Output["Output"]
+        Z("Concatenate All Features")
+        Z_Out["Final Feature Vector<br>(np.ndarray)"]
+  end
+    A -- port --> P1 & P2
+    P2 -- "&lt; 1024 (Well-known)" --> P3
+    P2 -- &lt; 49152 (Registered) --> P4
+    P2 -- else (Dynamic) --> P5
+    P3 -- "One-Hot" --> P_Out
+    P4 -- Encoding --> P_Out
+    P5 -- Encoding --> P_Out
+    A -- protocol --> C1
+    A -- severity --> C2
+    A -- threat_indicators --> T1 & T2
+    A -- timestamp --> TS1
+    TS1 --> TS2 & TS3
+    A -- source_ip --> N1 & N2
+    A -- bytes_transferred --> V1
+    A -- duration_seconds --> V2
+    P1 --> Z
+    P_Out --> Z
+    C1 --> Z
+    C2 --> Z
+    T1 --> Z
+    T2 --> Z
+    TS2 --> Z
+    TS3 --> Z
+    N1 --> Z
+    N2 --> Z
+    V1 --> Z
+    V2 --> Z
+    Z --> Z_Out
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style Z_Out fill:#bbf,stroke:#333,stroke-width:2px

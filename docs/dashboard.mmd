@@ -1,0 +1,34 @@
+---
+config:
+  layout: elk
+---
+flowchart TD
+ subgraph subGraph0["Data Sources"]
+        A["ClickHouse Database<br>- raw_logs table<br>- anomaly_scores table<br>- alerts table"]
+  end
+ subgraph subGraph1["Data Fetching Functions"]
+        C["get_data_counts()"]
+        D["get_recent_logs()"]
+        E["get_model_activity()"]
+        F["get_alerts()"]
+  end
+ subgraph subGraph2["Dashboard Backend Streamlit"]
+    direction LR
+        B["get_clickhouse_client()"]
+        subGraph1
+        G["Data Caching<br>@st.cache_data"]
+  end
+ subgraph subGraph3["Dashboard Frontend - User's Web Browser"]
+        H["Streamlit UI Components<br>- Tables<br>- Charts (Plotly)<br>- Metrics"]
+  end
+    B -- Creates Connection --> C
+    A -- SQL Query --> C & D & E & F
+    C -- DataFrame --> G
+    D -- DataFrame --> G
+    E -- DataFrame --> G
+    F -- DataFrame --> G
+    G -- Cached Data --> H
+    style A fill:#fbe9e7,stroke:#333
+    style B fill:#e3f2fd,stroke:#333
+    style G fill:#fff9c4,stroke:#333
+    style H fill:#e8f5e9,stroke:#333

@@ -1,0 +1,40 @@
+---
+config:
+  layout: elk
+---
+flowchart RL
+ subgraph subGraph0["Alert Generation Logic"]
+    direction LR
+        Start(["Start Alert Decision<br>(Input: scoring_result)"])
+        A@{ label: "<b>Rule 1:</b><br>Risk Level is 'Critical'?" }
+        B@{ label: "<b>Rule 2:</b><br>Risk Level is 'High' AND<br>Confidence &gt; 0.7?" }
+        C@{ label: "<b>Rule 3:</b><br>Risk Level is 'Medium' AND<br>(Confidence &gt; 0.75 OR<br>Multi-Model &amp; Conf &gt; 0.6)?" }
+        D@{ label: "<b>Rule 4:</b><br>Risk Level is 'Low' AND<br>Confidence &gt; 0.85 AND<br>Multiple Models agree?" }
+        E{"<b>Rule 5 (Override):</b><br>Strong Multi-Model Consensus?<br>(&gt;=3 models, Score &gt; 0.6, Conf &gt; 0.7)"}
+        F{"<b>Rule 6 (Override):</b><br>Priority Tag found AND<br>Score &gt; 0.65?"}
+        G{"<b>Rule 7 (Override):</b><br>Final Check: Is Score<br>exceptionally high (&gt; 0.85)?"}
+        GenerateAlert("✅ GENERATE ALERT")
+        NoAlert("❌ DO NOT ALERT")
+  end
+    Start --> A
+    A -- Yes --> GenerateAlert
+    A -- No --> B
+    B -- Yes --> GenerateAlert
+    B -- No --> C
+    C -- Yes --> GenerateAlert
+    C -- No --> D
+    D -- Yes --> GenerateAlert
+    D -- No --> E
+    E -- Yes --> GenerateAlert
+    E -- No --> F
+    F -- Yes --> GenerateAlert
+    F -- No --> G
+    G -- Yes --> GenerateAlert
+    G -- No --> NoAlert
+    A@{ shape: diamond}
+    B@{ shape: diamond}
+    C@{ shape: diamond}
+    D@{ shape: diamond}
+    style Start fill:#f0f4f8,stroke:#546e7a,stroke-width:2px
+    style GenerateAlert fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,font-weight:bold
+    style NoAlert fill:#ffebee,stroke:#c62828,stroke-width:2px,font-weight:bold

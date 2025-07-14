@@ -1,0 +1,38 @@
+sequenceDiagram
+    participant Pipeline as MLPipeline
+    participant Manager as MLModelManager
+    participant Model1 as EnhancedIsolationForest
+    participant Model2 as EnhancedClusteringModel
+    participant DB as ClickHouseClient
+    participant Kafka as KafkaClient
+
+    %% The process starts when the pipeline decides to process a log
+    Pipeline->>+Manager: predict_all(log_data)
+
+    Note over Manager: Loops through all enabled models
+
+    %% --- Interaction with the first model ---
+    Manager->>+Model1: predict(log_data)
+    
+    Note over Model1: Internal Steps:<br/>1. extract_features_enhanced()<br/>2. self.scaler.transform()<br/>3. self.model.decision_function()<br/>4. normalize_score()
+
+    Model1-->>-Manager: (score_1, is_anomaly_1)
+
+    %% --- Interaction with the second model ---
+    Manager->>+Model2: predict(log_data)
+    
+    Note over Model2: Internal Steps:<br/>1. extract_features_enhanced()<br/>2. self.scaler.transform()<br/>3. self.model.predict() & transform()<br/>4. Calculate cluster-aware score
+
+    Model2-->>-Manager: (score_2, is_anomaly_2)
+
+    %% Manager returns all collected predictions to the Pipeline
+    Manager-->>-Pipeline: {'isolation_forest': {...}, 'clustering': {...}}
+
+    Note over Pipeline: Receives all model predictions.<br/>Applies final enhancements:<br/>- Threat-based boost<br/>- Severity calibration
+
+    %% Pipeline now stores and publishes the final scores
+    Pipeline->>+DB: insert_anomaly_scores(final_scores)
+    DB-->>-Pipeline: Success
+
+    Pipeline->>+Kafka: send_message(final_scores)
+    Kafka-->>-Pipeline: Acknowledged

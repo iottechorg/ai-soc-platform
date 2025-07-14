@@ -1,0 +1,14 @@
+---
+config:
+  layout: elk
+---
+flowchart TD
+ subgraph subGraph0["RL Intelligence Core"]
+        ENV["SOC Environment<br>🌍 Custom Gym Environment<br>📊 State Space: Model Status<br>🎮 Action Space: Enable/Disable"]
+        PPO["PPO Agent<br>🧠 Proximal Policy Optimization<br>🎯 Policy Network<br>📈 Value Network<br>🔄 Experience Buffer"]
+        RW["Reward Calculator<br>🏆 Multi-Objective Function<br>• Detection Accuracy: +0.4<br>• False Positive Penalty: -0.3<br>• Resource Efficiency: +0.2<br>• Coverage Bonus: +0.1"]
+  end
+    ENV --> PPO & RW
+    PPO --> ENV
+    RW --> ENV
+    ENV --> n1["Untitled Node"]

@@ -1,0 +1,50 @@
+---
+config:
+  layout: fixed
+title: SOC Platform Architecture
+---
+flowchart LR
+    DG@{ label: "<i class=\"fa fa-cogs\"></i><br>Data Generator" } -- "1.Raw Logs" --> KAFKA@{ label: "<i class=\"fa fa-exchange-alt\"></i><br>Kafka Broker" }
+    KAFKA -- "2.Logs Stream" --> MLP@{ label: "<i class=\"fa fa-brain\"></i><br>ML Pipeline" }
+    MLP -- "3.Anomaly Scores" --> KAFKA
+    MLP -- "4.Stores Raw Logs" --> CLICKHOUSE@{ label: "<i class=\"fa fa-database\"></i><br>ClickHouse DB" }
+    KAFKA -- "5.Scores Stream" --> SE@{ label: "<i class=\"fa fa-calculator\"></i><br>Scoring Engine" }
+    SE -- "6.Enriched Alerts" --> KAFKA
+    SE -- "7.Stores Anomaly Scores" --> CLICKHOUSE
+    KAFKA -- "8.Alerts Stream" --> ALERTING@{ label: "<i class=\"fa fa-bullhorn\"></i><br>Alerting Service" }
+    ALERTING -- "9.Sends Notifications" --> SLACK@{ label: "<i class=\"fa fa-slack\"></i><br>Slack" } & EMAIL@{ label: "<i class=\"fa fa-envelope\"></i><br>Email" } & WEBHOOK@{ label: "<i class=\"fa fa-code-fork\"></i><br>Webhook" }
+    ALERTING -- "10.Stores Sent Alerts" --> CLICKHOUSE
+    O@{ label: "<i class=\"fa fa-sitemap\"></i><br>RL Orchestrator" } -- "11.Controls Models" --> MLP
+    USER@{ label: "<i class=\"fa fa-user\"></i><br>Analyst User" } -- "12.Accesses Dashboard" --> DASH@{ label: "<i class=\"fa fa-tachometer-alt\"></i><br>Dashboard" }
+    DASH -- "13.Reads Data for UI" --> CLICKHOUSE
+    KAFKA --- ZK@{ label: "<i class=\"fa fa-link\"></i><br>Zookeeper" }
+    DG@{ shape: rect}
+    KAFKA@{ shape: rect}
+    MLP@{ shape: rect}
+    CLICKHOUSE@{ shape: rect}
+    SE@{ shape: rect}
+    ALERTING@{ shape: rect}
+    SLACK@{ shape: rect}
+    EMAIL@{ shape: rect}
+    WEBHOOK@{ shape: rect}
+    O@{ shape: rect}
+    USER@{ shape: rect}
+    DASH@{ shape: rect}
+    ZK@{ shape: rect}
+     DG:::app
+     KAFKA:::infra
+     MLP:::app
+     CLICKHOUSE:::infra
+     SE:::app
+     ALERTING:::app
+     SLACK:::user
+     EMAIL:::user
+     WEBHOOK:::user
+     O:::app
+     USER:::user
+     DASH:::app
+     ZK:::mgmt
+    classDef app fill:#e3f2fd,stroke:#0d47a1,stroke-width:2px,color:#0d47a1
+    classDef infra fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#1b5e20
+    classDef mgmt fill:#fffde7,stroke:#f57f17,stroke-width:2px,color:#f57f17
+    classDef user fill:#fce4ec,stroke:#880e4f,stroke-width:2px,color:#880e4f

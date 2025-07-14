@@ -1,0 +1,342 @@
+# run_orchestrator.py - FINAL FIX (correct port + array indexing)
+#!/usr/bin/env python3
+
+import sys
+import time
+import logging
+import threading
+import psutil
+from pathlib import Path
+from typing import Dict, Any
+from datetime import datetime
+from collections import deque
+
+# Add current directory to path
+sys.path.insert(0, str(Path(__file__).parent))
+
+# Import without circular dependency
+try:
+    from services.ml_models import MLModelManager
+    from config.config_loader import ConfigLoader
+    from shared.kafka_client import KafkaClient
+    from shared.database import ClickHouseClient
+    from shared.monitoring import MetricsCollector
+    
+    # Import the RLOrchestrator class directly from the orchestrator module
+    import services.orchestrator as orchestrator_module
+    RLOrchestrator = orchestrator_module.RLOrchestrator
+    
+except ImportError as e:
+    print(f"Import error: {e}")
+    sys.exit(1)
+
+class OrchestratorIntegrator:
+    """Integration wrapper for the existing RL Orchestrator"""
+    
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+        self.config = ConfigLoader()
+        
+        # Initialize your existing components (KEEP YOUR STRUCTURE)
+        self.ml_manager = MLModelManager(self.config._config)
+        self.orchestrator = RLOrchestrator(self.ml_manager, self.config.get_section('orchestrator'))
+        
+        # Add integration components
+        self.kafka_client = KafkaClient(self.config.get('kafka.broker'))
+        self.db = None
+        self.metrics = None
+        
+        # Try to initialize optional components
+        try:
+            self.db = ClickHouseClient(
+                host=self.config.get('clickhouse.host'),
+                port=9000,  # FIXED: Force native port
+                user=self.config.get('clickhouse.user'),
+                password=self.config.get('clickhouse.password'),
+                database=self.config.get('clickhouse.database')
+            )
+        except Exception as e:
+            self.logger.warning(f"ClickHouse not available: {e}")
+        
+        try:
+            self.metrics = MetricsCollector()
+        except Exception as e:
+            self.logger.warning(f"Metrics not available: {e}")
+        
+        # State tracking
+        self.running = False
+        self.system_metrics = {}
+        self.performance_data = deque(maxlen=100)
+        
+    def start(self):
+        """Start the integrated orchestrator"""
+        self.logger.info("🧠 Starting RL Orchestrator Integration...")
+        
+        # Connect to database if available
+        if self.db:
+            try:
+                self.db.connect()
+                if self.db.is_connected():
+                    self.logger.info("✅ Connected to ClickHouse for performance data")
+                else:
+                    self.logger.warning("⚠️ ClickHouse connection failed")
+                    self.db = None
+            except Exception as e:
+                self.logger.warning(f"⚠️ Database connection failed: {e}")
+                self.db = None
+        
+        # Start your existing orchestrator
+        try:
+            self.orchestrator.start()
+            self.logger.info("✅ RL Orchestrator core started")
+        except Exception as e:
+            self.logger.error(f"❌ Failed to start RL Orchestrator: {e}")
+            return False
+        
+        self.running = True
+        
+        # Start integration threads
+        try:
+            # Thread 1: System metrics collection
+            metrics_thread = threading.Thread(target=self._collect_system_metrics, daemon=True)
+            metrics_thread.start()
+            
+            # Thread 2: Performance data collection
+            performance_thread = threading.Thread(target=self._collect_performance_data, daemon=True)
+            performance_thread.start()
+            
+            # Thread 3: Model control (FIXED VERSION)
+            control_thread = threading.Thread(target=self._model_control_loop, daemon=True)
+            control_thread.start()
+            
+            self.logger.info("✅ Started integration threads")
+            
+        except Exception as e:
+            self.logger.error(f"❌ Failed to start integration threads: {e}")
+        
+        return True
+    
+    def stop(self):
+        """Stop the orchestrator"""
+        self.logger.info("🛑 Stopping RL Orchestrator...")
+        self.running = False
+        
+        try:
+            self.orchestrator.stop()
+        except Exception as e:
+            self.logger.error(f"Error stopping orchestrator: {e}")
+    
+    def _collect_system_metrics(self):
+        """Collect real system metrics for RL rewards"""
+        while self.running:
+            try:
+                # Get REAL system metrics
+                cpu_percent = psutil.cpu_percent(interval=1)
+                memory = psutil.virtual_memory()
+                
+                self.system_metrics = {
+                    'cpu_usage': cpu_percent / 100.0,  # Normalize to 0-1
+                    'memory_usage': memory.percent / 100.0,
+                    'processing_latency': 0.1,  # Placeholder - would be real data
+                    'timestamp': datetime.now()
+                }
+                
+                # Update orchestrator with real metrics
+                try:
+                    self.orchestrator.update_system_metrics(self.system_metrics)
+                except Exception as e:
+                    self.logger.debug(f"Error updating system metrics: {e}")
+                
+                self.logger.debug(f"📊 System: CPU {cpu_percent:.1f}%, Memory {memory.percent:.1f}%")
+                
+                time.sleep(10)  # Update every 10 seconds
+                
+            except Exception as e:
+                self.logger.error(f"❌ Error collecting system metrics: {e}")
+                time.sleep(10)
+    
+    def _collect_performance_data(self):
+        """Collect ML model performance data"""
+        while self.running:
+            try:
+                # Get model status from your existing ML manager
+                model_status = self.ml_manager.get_model_status()
+                
+                # Create performance feedback for each model
+                for model_name, status in model_status.items():
+                    if status.get('enabled', False):
+                        # Create performance metrics (in real system, this would come from actual measurements)
+                        performance = {
+                            'model_name': model_name,
+                            'precision': 0.85 + (hash(model_name) % 10) / 100,  # Simulated but consistent
+                            'recall': 0.80 + (hash(model_name) % 15) / 100,
+                            'f1_score': 0.82 + (hash(model_name) % 12) / 100,
+                            'processing_time': 0.1 + (hash(model_name) % 5) / 100,
+                            'timestamp': datetime.now()
+                        }
+                        
+                        # Feed to orchestrator
+                        try:
+                            self.orchestrator.add_performance_feedback(performance)
+                            self.performance_data.append(performance)
+                        except Exception as e:
+                            self.logger.debug(f"Error adding performance feedback: {e}")
+                
+                self.logger.debug(f"📈 Updated performance for {len(model_status)} models")
+                time.sleep(60)  # Update every minute
+                
+            except Exception as e:
+                self.logger.error(f"❌ Error collecting performance data: {e}")
+                time.sleep(60)
+    
+    def _model_control_loop(self):
+        """Apply RL decisions to control models - COMPLETELY FIXED VERSION"""
+        while self.running:
+            try:
+                # Get current policy from your existing orchestrator
+                current_policy = self.orchestrator.get_current_policy()
+                
+                # COMPREHENSIVE FIX: Handle different policy formats safely
+                if current_policy is None:
+                    self.logger.debug("⚠️ No policy available yet")
+                    time.sleep(30)
+                    continue
+                
+                if isinstance(current_policy, dict):
+                    # Normal dictionary format
+                    for model_name, should_enable in current_policy.items():
+                        try:
+                            if should_enable:
+                                self.ml_manager.enable_model(model_name)
+                            else:
+                                self.ml_manager.disable_model(model_name)
+                        except Exception as e:
+                            self.logger.debug(f"Error controlling model {model_name}: {e}")
+                    
+                    active_count = sum(1 for enabled in current_policy.values() if enabled)
+                    total_count = len(current_policy)
+                    self.logger.debug(f"🎮 RL Policy: {active_count}/{total_count} models active")
+                
+                elif hasattr(current_policy, '__iter__') and not isinstance(current_policy, str):
+                    # Array-like format - need to map to model names
+                    try:
+                        model_names = list(self.ml_manager.models.keys())
+                        policy_list = list(current_policy)
+                        
+                        if len(policy_list) == len(model_names):
+                            for i, (model_name, should_enable) in enumerate(zip(model_names, policy_list)):
+                                try:
+                                    if should_enable:
+                                        self.ml_manager.enable_model(model_name)
+                                    else:
+                                        self.ml_manager.disable_model(model_name)
+                                except Exception as e:
+                                    self.logger.debug(f"Error controlling model {model_name}: {e}")
+                            
+                            active_count = sum(1 for enabled in policy_list if enabled)
+                            self.logger.debug(f"🎮 RL Policy (array): {active_count}/{len(policy_list)} models active")
+                        else:
+                            self.logger.warning(f"⚠️ Policy length mismatch: {len(policy_list)} vs {len(model_names)}")
+                    except Exception as e:
+                        self.logger.error(f"❌ Error processing array policy: {e}")
+                
+                else:
+                    self.logger.warning(f"⚠️ Unexpected policy type: {type(current_policy)} - {current_policy}")
+                
+                time.sleep(30)  # Apply decisions every 30 seconds
+                
+            except Exception as e:
+                self.logger.error(f"❌ Error in model control: {e}")
+                import traceback
+                self.logger.debug(f"Traceback: {traceback.format_exc()}")
+                time.sleep(30)
+    
+    def get_status(self) -> Dict[str, Any]:
+        """Get orchestrator status for monitoring"""
+        try:
+            base_status = self.orchestrator.get_performance_summary()
+            
+            enhanced_status = {
+                **base_status,
+                'system_metrics': self.system_metrics,
+                'database_connected': self.db.is_connected() if self.db else False,
+                'ml_models_status': self.ml_manager.get_model_status(),
+                'current_policy': self.orchestrator.get_current_policy(),
+                'running': self.running
+            }
+            
+            return enhanced_status
+            
+        except Exception as e:
+            self.logger.error(f"Error getting status: {e}")
+            return {'error': str(e), 'running': self.running}
+
+def main():
+    """Main entry point - FINAL COMPREHENSIVE FIX"""
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    logger = logging.getLogger(__name__)
+    
+    try:
+        logger.info("🧠 Starting RL Orchestrator (Final Comprehensive Fix)...")
+        
+        # Initialize the integrator
+        integrator = OrchestratorIntegrator()
+        
+        if integrator.start():
+            logger.info("✅ RL Orchestrator started successfully")
+            logger.info("🤖 Learning optimal model configurations...")
+            
+            # Keep running and log status
+            while True:
+                time.sleep(60)  # Status every minute
+                
+                try:
+                    status = integrator.get_status()
+                    current_policy = status.get('current_policy', {})
+                    
+                    # Safe policy status display
+                    if isinstance(current_policy, dict):
+                        active_models = sum(1 for enabled in current_policy.values() if enabled)
+                        total_models = len(current_policy)
+                        policy_str = f"{active_models}/{total_models}"
+                    elif hasattr(current_policy, '__len__') and not isinstance(current_policy, str):
+                        try:
+                            active_models = sum(1 for enabled in current_policy if enabled)
+                            total_models = len(current_policy)
+                            policy_str = f"{active_models}/{total_models}"
+                        except:
+                            policy_str = "unknown"
+                    else:
+                        policy_str = "unknown"
+                    
+                    cpu_usage = status.get('system_metrics', {}).get('cpu_usage', 0) * 100
+                    
+                    logger.info(f"🧠 RL Status: {policy_str} models active, "
+                               f"CPU: {cpu_usage:.1f}%")
+                    
+                    # Log recent decisions if available
+                    if 'recent_avg_reward' in status:
+                        logger.info(f"🎯 Recent reward: {status['recent_avg_reward']:.3f}, "
+                                   f"Total decisions: {status.get('total_decisions', 0)}")
+                    
+                except Exception as e:
+                    logger.error(f"❌ Error getting status: {e}")
+        else:
+            logger.error("❌ Failed to start RL Orchestrator")
+            sys.exit(1)
+            
+    except KeyboardInterrupt:
+        logger.info("🛑 Shutting down RL Orchestrator...")
+        if 'integrator' in locals():
+            integrator.stop()
+    except Exception as e:
+        logger.error(f"💥 RL Orchestrator error: {e}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
