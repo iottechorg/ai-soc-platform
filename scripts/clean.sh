@@ -1,16 +1,16 @@
-
-# scripts/clean.sh
 #!/bin/bash
+set -e
 
 echo "🧹 Cleaning up SOC Platform..."
 
-# Stop and remove containers
-docker-compose down -v --remove-orphans
+# Stop and remove all containers, networks, and volumes defined in docker-compose.
+echo "   -> Stopping and removing containers and networks..."
+docker compose down -v --remove-orphans
 
-# Remove images
+# Find all images with the 'soc-platform/' prefix and forcefully remove them.
+echo "   -> Removing built Docker images..."
 docker images "soc-platform/*" -q | xargs -r docker rmi -f
+docker images "soc-platform-base" -q | xargs -r docker rmi -f
 
-# Clean up volumes (uncomment if you want to remove all data)
-# docker volume prune -f
 
-echo "✅ Cleanup completed!"
+echo "✅ Cleanup complete!"

@@ -12,8 +12,8 @@ from datetime import datetime
 sys.path.insert(0, str(Path(__file__).parent))
 
 try:
-    from services.alerting import AlertingService
-    from config.config_loader import ConfigLoader
+    from alerting import AlertingService
+    from shared.config_loader import ConfigLoader
     from shared.kafka_client import KafkaClient
 except ImportError as e:
     print(f"❌ Import error: {e}")

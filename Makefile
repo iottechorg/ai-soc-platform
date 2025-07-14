@@ -1,13 +1,11 @@
 # Makefile (Updated)
-.PHONY: help build deploy start stop restart logs clean health status fix-deps
+.PHONY: help build build-base start stop restart logs clean health status 
 
 # Default target
 help:
 	@echo "SOC Platform Management Commands"
 	@echo "================================="
-	@echo "fix-deps  - Create compatible requirements files"
 	@echo "build     - Build all Docker images"
-	@echo "deploy    - Deploy the complete platform"
 	@echo "start     - Start all services"
 	@echo "stop      - Stop all services"
 	@echo "restart   - Restart all services"
@@ -16,20 +14,20 @@ help:
 	@echo "health    - Run health checks"
 	@echo "status    - Show service status"
 
-fix-deps:
-	@echo "🔧 Creating compatible requirements files..."
+build-base:
+	@echo "Building base image..."
+	@docker-compose build base
+
+build: build-base
+	@echo "Building all services..."
 	@bash scripts/build.sh
 
-build: fix-deps
-	@bash scripts/build.sh
-
-deploy: build
-	@bash scripts/deploy.sh
-
-start:
+start: build
+	@echo "Starting all services..."
 	@docker-compose up -d
 
 stop:
+	@echo "Stopping all services..."
 	@docker-compose down
 
 restart: stop start

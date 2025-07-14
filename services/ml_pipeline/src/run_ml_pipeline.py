@@ -14,8 +14,8 @@ from collections import deque
 sys.path.insert(0, str(Path(__file__).parent))
 
 try:
-    from services.ml_models import MLModelManager
-    from config.config_loader import ConfigLoader
+    from ml_models import MLModelManager
+    from shared.config_loader import ConfigLoader
     from shared.kafka_client import KafkaClient
     from shared.database import ClickHouseClient
     from shared.monitoring import MetricsCollector

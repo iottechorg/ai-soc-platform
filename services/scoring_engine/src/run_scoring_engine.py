@@ -15,8 +15,8 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 try:
     # Import the enhanced scoring engine
-    from services.scoring_engine import FixedAdaptiveScoringEngine as ScoringEngine
-    from config.config_loader import ConfigLoader
+    from scoring_engine import FixedAdaptiveScoringEngine as ScoringEngine
+    from shared.config_loader import ConfigLoader
     from shared.kafka_client import KafkaClient
     from shared.database import ClickHouseClient
 except ImportError as e:

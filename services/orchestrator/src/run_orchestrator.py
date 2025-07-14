@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 # IMPROVED: Better import handling with specific error messages
 try:
-    from config.config_loader import ConfigLoader
+    from shared.config_loader import ConfigLoader
     from shared.kafka_client import KafkaClient
     from shared.database import ClickHouseClient
     from shared.monitoring import MetricsCollector

@@ -1,5 +1,12 @@
 services:
-  # Infrastructure services remain the same...
+  # Base image build definition
+  base:
+    image: soc-platform-base:latest
+    build:
+      context: .
+      dockerfile: ./services/common/Dockerfile.base
+    
+  # --- Infrastructure Services ---
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     hostname: zookeeper
@@ -53,14 +60,15 @@ services:
     container_name: soc-clickhouse
     hostname: clickhouse
     ports:
-      - "8124:8123"  # HTTP interface
-      - "9000:9000"  # Native TCP interface (for clickhouse-driver)
+      - "8124:8123" # HTTP
+      - "9000:9000" # Native TCP
     environment:
       CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
       CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-secure_password}
       CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
     volumes:
       - clickhouse_data:/var/lib/clickhouse
+      - ./infra/clickhouse/config.xml:/etc/clickhouse-server/config.d/config.xml # Mount custom config
     networks:
       - soc-network
     restart: unless-stopped
@@ -71,16 +79,18 @@ services:
       retries: 5
       start_period: 30s
 
-  # Application services (updated to use fixed images)
+  # --- Application Services ---
   data-generator:
     image: soc-platform/data-generator:latest
     container_name: soc-data-generator
+    build:
+      context: .
+      dockerfile: ./services/data_generator/Dockerfile
     depends_on:
+      base:
+        condition: service_completed_successfully
       kafka:
         condition: service_healthy
-    environment:
-      - KAFKA_BROKER=kafka:29092
-      - PYTHONUNBUFFERED=1
     env_file:
       - .env
     networks:
@@ -90,21 +100,18 @@ services:
   ml-pipeline:
     image: soc-platform/ml-pipeline:latest
     container_name: soc-ml-pipeline
+    build:
+      context: .
+      dockerfile: ./services/ml_pipeline/Dockerfile
     depends_on:
+      base:
+        condition: service_completed_successfully
       kafka:
         condition: service_healthy
       clickhouse:
         condition: service_healthy
     ports:
-      - "8000:8000"  
-    environment:
-      - KAFKA_BROKER=kafka:29092
-      - CLICKHOUSE_HOST=clickhouse
-      - CLICKHOUSE_PORT=9000
-      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
-      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-secure_password}
-      - CLICKHOUSE_DATABASE=soc_platform
-      - PYTHONUNBUFFERED=1
+      - "8000:8000"
     env_file:
       - .env
     networks:
@@ -114,14 +121,14 @@ services:
   orchestrator:
     image: soc-platform/orchestrator:latest
     container_name: soc-orchestrator
+    build:
+      context: .
+      dockerfile: ./services/orchestrator/Dockerfile
     depends_on:
+      base:
+        condition: service_completed_successfully
       ml-pipeline:
         condition: service_started
-    environment:
-      - KAFKA_BROKER=kafka:29092
-      - CLICKHOUSE_HOST=clickhouse
-      - CLICKHOUSE_PORT=9000
-      - PYTHONUNBUFFERED=1
     env_file:
       - .env
     networks:
@@ -131,19 +138,16 @@ services:
   scoring-engine:
     image: soc-platform/scoring-engine:latest
     container_name: soc-scoring-engine
+    build:
+      context: .
+      dockerfile: ./services/scoring_engine/Dockerfile
     depends_on:
+      base:
+        condition: service_completed_successfully
       kafka:
         condition: service_healthy
       clickhouse:
         condition: service_healthy
-    environment:
-      - KAFKA_BROKER=kafka:29092
-      - CLICKHOUSE_HOST=clickhouse
-      - CLICKHOUSE_PORT=9000
-      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
-      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-secure_password}
-      - CLICKHOUSE_DATABASE=soc_platform
-      - PYTHONUNBUFFERED=1
     env_file:
       - .env
     networks:
@@ -153,18 +157,14 @@ services:
   alerting:
     image: soc-platform/alerting:latest
     container_name: soc-alerting
+    build:
+      context: .
+      dockerfile: ./services/alerting/Dockerfile
     depends_on:
-      kafka:
+      base:
+        condition: service_completed_successfully
+      kafka: 
         condition: service_healthy
-    environment:
-      - KAFKA_BROKER=kafka:29092
-      - PYTHONUNBUFFERED=1
-     # Add your alerting credentials
-      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
-      - EMAIL_SMTP_SERVER=${EMAIL_SMTP_SERVER:-}
-      - EMAIL_SMTP_PORT=${EMAIL_SMTP_PORT:-587}
-      - EMAIL_USERNAME=${EMAIL_USERNAME:-}
-      - EMAIL_PASSWORD=${EMAIL_PASSWORD:-}
     env_file:
       - .env
     networks:
@@ -174,19 +174,17 @@ services:
   dashboard:
     image: soc-platform/dashboard:latest
     container_name: soc-dashboard
-    hostname: dashboard
+    build:
+      context: .
+      dockerfile: ./services/dashboard/Dockerfile
+    
     depends_on:
+      base:
+        condition: service_completed_successfully
       clickhouse:
         condition: service_healthy
     ports:
       - "8501:8501"
-    environment:
-      - CLICKHOUSE_HOST=clickhouse
-      - CLICKHOUSE_PORT=9000  # Use native port for clickhouse-driver
-      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
-      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-secure_password}
-      - CLICKHOUSE_DATABASE=soc_platform
-      - PYTHONUNBUFFERED=1
     env_file:
       - .env
     networks:
@@ -197,7 +195,7 @@ volumes:
   zookeeper_data:
   kafka_data:
   clickhouse_data:
-  redis_data:
+
 
 networks:
   soc-network:

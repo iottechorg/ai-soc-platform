@@ -1,20 +1,17 @@
-
-# scripts/health-check.sh
 #!/bin/bash
 
 echo "🏥 SOC Platform Health Check"
 echo "================================"
 
-# Check container status
 echo "Container Status:"
-docker-compose ps
-
+docker compose ps
 echo ""
-echo "Service Health Checks:"
+
+echo "Core Service Health:"
 
 # Check Kafka
 echo -n "Kafka: "
-if docker-compose exec -T kafka kafka-broker-api-versions --bootstrap-server localhost:9092 >/dev/null 2>&1; then
+if docker compose exec -T kafka kafka-topics --bootstrap-server localhost:9092 --list >/dev/null 2>&1; then
     echo "✅ Healthy"
 else
     echo "❌ Unhealthy"
@@ -22,44 +19,25 @@ fi
 
 # Check ClickHouse
 echo -n "ClickHouse: "
-if curl -s http://localhost:8123/ping >/dev/null; then
+# Using the HTTP ping endpoint
+if curl -s http://localhost:8124/ping | grep -q "Ok."; then
     echo "✅ Healthy"
 else
     echo "❌ Unhealthy"
 fi
 
-# Check Redis
-echo -n "Redis: "
-if docker-compose exec -T redis redis-cli ping >/dev/null 2>&1; then
-    echo "✅ Healthy"
+# Check Dashboard (if it's running)
+# We check if the container is running before trying to curl it.
+if [ "$( docker container inspect -f '{{.State.Status}}' soc-dashboard 2>/dev/null )" = "running" ]; then
+    echo -n "Dashboard: "
+    if curl -s -f http://localhost:8501/_stcore/health >/dev/null 2>&1; then
+        echo "✅ Healthy"
+    else
+        echo "❌ Unhealthy"
+    fi
 else
-    echo "❌ Unhealthy"
-fi
-
-# Check Dashboard
-echo -n "Dashboard: "
-if curl -s http://localhost:8501/_stcore/health >/dev/null; then
-    echo "✅ Healthy"
-else
-    echo "❌ Unhealthy"
-fi
-
-# Check Grafana
-echo -n "Grafana: "
-if curl -s http://localhost:3000/api/health >/dev/null; then
-    echo "✅ Healthy"
-else
-    echo "❌ Unhealthy"
-fi
-
-# Check Prometheus
-echo -n "Prometheus: "
-if curl -s http://localhost:9090/-/healthy >/dev/null; then
-    echo "✅ Healthy"
-else
-    echo "❌ Unhealthy"
+    echo "Dashboard: ⚪ Not running"
 fi
 
 echo ""
-echo "Resource Usage:"
-docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}"
+echo "For more details, use 'make logs'"

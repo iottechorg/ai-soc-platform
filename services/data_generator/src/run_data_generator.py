@@ -10,8 +10,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 try:
-    from services.data_generator import EnhancedSyntheticDataGenerator
-    from config.config_loader import ConfigLoader
+    from data_generator import EnhancedSyntheticDataGenerator
+    from shared.config_loader import ConfigLoader
     from shared.kafka_client import KafkaClient
 except ImportError as e:
     print(f"Import error: {e}")

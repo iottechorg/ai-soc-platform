@@ -1,0 +1,37 @@
+# Base Dockerfile
+FROM python:3.9-slim
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV APP_HOME=/app
+WORKDIR $APP_HOME
+
+# Install common system dependencies and wait-for-it script
+RUN apt-get update && apt-get install -y \
+    curl \
+    netcat-openbsd \
+    gcc g++ \
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -o /usr/local/bin/wait-for-it.sh https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh \
+    && chmod +x /usr/local/bin/wait-for-it.sh
+
+# Install common Python base requirements
+# You would consolidate all common packages from requirements-*.txt into this one file
+COPY ./services/common/requirements-base.txt .
+RUN pip install --no-cache-dir -r requirements-base.txt
+
+# Create a non-root user for security
+RUN useradd --create-home --shell /bin/bash soc-user
+
+ENV PATH=/home/soc-user/.local/bin:$PATH
+
+# 2. Create directories that services might need
+RUN mkdir -p ${APP_HOME}/models ${APP_HOME}/logs ${APP_HOME}/rl_models
+
+# 3. Change ownership of the entire app directory to the new user
+# This is the crucial step. It gives soc-user permission to write here.
+RUN chown -R soc-user:soc-user ${APP_HOME}
+
+# 4. Now, switch to the non-root user for all subsequent commands
+USER soc-user
