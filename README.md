@@ -101,3 +101,6 @@ deploy:
 2. Use proper TLS certificates in production
 3. Restrict network access
 4. Regular security updates
+
+## Medium Access
+[Building the Future of Cybersecurity: An AI-Driven SOC Platform with Reinforcement Learning](https://akpolatcem.medium.com/building-the-future-of-cybersecurity-an-ai-driven-soc-platform-with-reinforcement-learning-a542820d9db8)
