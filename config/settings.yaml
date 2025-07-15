@@ -15,12 +15,7 @@ clickhouse:
   password: "secure_password"
   database: "soc_platform"
 
-redis:
-  host: "redis"
-  port: 6379
-  db: 0
-
-# ENHANCED ML MODELS - Better calibrated for alert generation
+# ML MODELS
 ml_models:
   isolation_forest:
     enabled: true
@@ -99,18 +94,18 @@ alerting:
       enabled: false
       webhook_url: ""
   
-  # REDUCED deduplication for better alert flow
+  # deduplication for better alert flow
   deduplication_window_minutes: 5  # Reduced from 20
   similarity_threshold: 0.7        # Reduced from 0.8
   
-  # IMPROVED rate limiting - allows more alerts
+  # rate limiting - allows more alerts
   adaptive_rate_limits:
     enabled: true
     target_hourly_alerts: 60        # Increased from 40
     burst_threshold: 8              # Increased from 5
     cooldown_period: 10             # Reduced from 15
   
-  # ENHANCED severity-based limits - allows more alerts
+  # severity-based limits - allows more alerts
   rate_limits:
     critical:
       count: 15       # Increased from 10
@@ -125,13 +120,13 @@ alerting:
       count: 120      # Increased from 100
       window: 3600    
 
-# ENHANCED DATA GENERATOR - Optimized threat distribution
+# DATA GENERATOR - Optimized threat distribution
 data_generator:
   batch_size: 60
   interval_seconds: 10
   threat_probability: 0.05    # 5% threat rate for better ML training
   
-  # REALISTIC threat patterns with better distribution
+  # threat patterns with better distribution
   threat_patterns:
     brute_force:
       probability: 0.018      # Increased slightly

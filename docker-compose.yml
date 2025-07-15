@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: ./services/common/Dockerfile.base
     
-  # --- Infrastructure Services ---
+   # --- Infrastructure Services ---
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     hostname: zookeeper
@@ -44,6 +44,8 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      # Pre-create required topics
+      KAFKA_CREATE_TOPICS: "raw-logs:3:1,anomaly-scores:3:1,model-control:1:1,model-status:1:1,system-metrics:1:1,alerts:1:1"
     volumes:
       - kafka_data:/var/lib/kafka/data
     networks:
@@ -80,6 +82,49 @@ services:
       start_period: 30s
 
   # --- Application Services ---
+
+  data-storage:
+    image: soc-platform/data-storage:latest
+    container_name: soc-data-storage
+    build:
+      context: .
+      dockerfile: ./services/data_storage/Dockerfile
+    depends_on:
+      kafka:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    environment:
+      - KAFKA_BROKER=kafka:29092
+      - CLICKHOUSE_HOST=clickhouse
+      - CLICKHOUSE_PORT=9000
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-secure_password}
+      - CLICKHOUSE_DATABASE=${CLICKHOUSE_DATABASE:-soc_platform}
+      - LOG_LEVEL=INFO
+      - BATCH_SIZE=50
+      - BATCH_TIMEOUT_SECONDS=5
+      - MAX_RETRIES=3
+    env_file:
+      - .env
+    ports:
+      - "8003:8003"  # Health check port
+    networks:
+      - soc-network
+    restart: unless-stopped
+    # Resource allocation for database operations
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
   data-generator:
     image: soc-platform/data-generator:latest
     container_name: soc-data-generator
@@ -87,16 +132,23 @@ services:
       context: .
       dockerfile: ./services/data_generator/Dockerfile
     depends_on:
-      base:
-        condition: service_completed_successfully
       kafka:
         condition: service_healthy
+    environment:
+      - KAFKA_BROKER=kafka:29092
+      - LOG_LEVEL=INFO
     env_file:
       - .env
     networks:
       - soc-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
 
+  # SEPARATED ML PIPELINE SERVICE
   ml-pipeline:
     image: soc-platform/ml-pipeline:latest
     container_name: soc-ml-pipeline
@@ -104,20 +156,40 @@ services:
       context: .
       dockerfile: ./services/ml_pipeline/Dockerfile
     depends_on:
-      base:
-        condition: service_completed_successfully
       kafka:
         condition: service_healthy
       clickhouse:
         condition: service_healthy
-    ports:
-      - "8000:8000"
+    environment:
+      - KAFKA_BROKER=kafka:29092
+      - CLICKHOUSE_HOST=clickhouse
+      - CLICKHOUSE_PORT=9000
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-secure_password}
+      - CLICKHOUSE_DATABASE=${CLICKHOUSE_DATABASE:-soc_platform}
+      - LOG_LEVEL=INFO
     env_file:
       - .env
+    # Expose internal port for health checks (optional)
+    ports:
+      - "8001:8001"
     networks:
       - soc-network
     restart: unless-stopped
+    # Increased resources for ML training
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.5'
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8001/health', timeout=5)"]
+      interval: 60s
+      timeout: 15s
+      retries: 3
+      start_period: 60s
 
+  # SEPARATED ORCHESTRATOR SERVICE  
   orchestrator:
     image: soc-platform/orchestrator:latest
     container_name: soc-orchestrator
@@ -125,15 +197,37 @@ services:
       context: .
       dockerfile: ./services/orchestrator/Dockerfile
     depends_on:
-      base:
-        condition: service_completed_successfully
+      kafka:
+        condition: service_healthy
       ml-pipeline:
         condition: service_started
+    environment:
+      - KAFKA_BROKER=kafka:29092
+      - LOG_LEVEL=INFO
+      # RL-specific environment variables
+      - RL_LEARNING_RATE=0.0005
+      - RL_EXPLORATION_RATE=0.15
+      - DECISION_INTERVAL=45
     env_file:
       - .env
+    # Expose internal port for health checks (optional)
+    ports:
+      - "8002:8002"
     networks:
       - soc-network
     restart: unless-stopped
+    # Moderate resources for RL processing
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8002/health', timeout=5)"]
+      interval: 90s
+      timeout: 15s
+      retries: 3
+      start_period: 120s
 
   scoring-engine:
     image: soc-platform/scoring-engine:latest
@@ -142,12 +236,16 @@ services:
       context: .
       dockerfile: ./services/scoring_engine/Dockerfile
     depends_on:
-      base:
-        condition: service_completed_successfully
       kafka:
         condition: service_healthy
       clickhouse:
         condition: service_healthy
+      ml-pipeline:
+        condition: service_started
+    environment:
+      - KAFKA_BROKER=kafka:29092
+      - CLICKHOUSE_HOST=clickhouse
+      - LOG_LEVEL=INFO
     env_file:
       - .env
     networks:
@@ -161,10 +259,13 @@ services:
       context: .
       dockerfile: ./services/alerting/Dockerfile
     depends_on:
-      base:
-        condition: service_completed_successfully
       kafka: 
         condition: service_healthy
+      scoring-engine:
+        condition: service_started
+    environment:
+      - KAFKA_BROKER=kafka:29092
+      - LOG_LEVEL=INFO
     env_file:
       - .env
     networks:
@@ -177,14 +278,16 @@ services:
     build:
       context: .
       dockerfile: ./services/dashboard/Dockerfile
-    
     depends_on:
-      base:
-        condition: service_completed_successfully
       clickhouse:
         condition: service_healthy
     ports:
       - "8501:8501"
+    environment:
+      - CLICKHOUSE_HOST=clickhouse
+      - LOG_LEVEL=INFO
+      - CLICKHOUSE_PORT=9000  # <--- ADD THIS LINE
+
     env_file:
       - .env
     networks:
@@ -195,7 +298,6 @@ volumes:
   zookeeper_data:
   kafka_data:
   clickhouse_data:
-
 
 networks:
   soc-network:
