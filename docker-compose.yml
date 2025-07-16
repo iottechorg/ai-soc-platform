@@ -27,6 +27,22 @@ services:
       timeout: 10s
       retries: 3
 
+  kafka-ui:
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 8081:8080
+    networks:
+      - soc-network
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_CLUSTERS_0_NAME: cluster-01
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_METRICS_PORT: 9997
+      #KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: connect-01
+      #KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://connect-file-pulse:8083
+      DYNAMIC_CONFIG_ENABLED: 'true'
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     hostname: kafka
