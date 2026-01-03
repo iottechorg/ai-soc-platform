@@ -1,4 +1,284 @@
 
+# kafka:
+#   broker: "kafka:29092"
+#   topics:
+#     raw_logs: "raw-logs"
+#     anomaly_scores: "anomaly-scores"
+#     alerts: "alerts"
+#     model_control: "model-control"
+#     system_metrics: "system-metrics"
+
+# clickhouse:
+#   host: "clickhouse"
+#   port: 9000
+#   user: "default"
+#   password: "secure_password"
+#   database: "soc_platform"
+
+# # ML MODELS
+# ml_models:
+#   isolation_forest:
+#     enabled: true
+#     contamination: 0.06    # Slightly increased for better detection
+#     n_estimators: 200
+#     max_samples: 512
+    
+#   clustering:
+#     enabled: true
+#     n_clusters: 8
+#     max_iter: 500
+#     n_init: 20
+    
+#   time_series:
+#     enabled: false
+#     window_size: 150
+#     threshold: 2.5
+    
+#   forbidden_ratio:
+#     enabled: true
+#     window_size: 200
+
+# # RL ORCHESTRATOR - Enhanced Configuration
+# orchestrator:
+#   learning_rate: 0.0005
+#   exploration_rate: 0.15
+#   decision_interval: 45
+#   target_alert_rate: 0.05
+  
+#   model_weights:
+#     isolation_forest: 0.4
+#     clustering: 0.3
+#     forbidden_ratio: 0.3
+
+# # ENHANCED SCORING - FIXED CONFIGURATION for better alerts
+# scoring:
+#   aggregation_method: "adaptive_weighted"
+#   target_alert_rate: 0.05  # Target 5% alert rate
+  
+#   # IMPROVED model weights
+#   model_weights:
+#     isolation_forest: 0.4
+#     clustering: 0.3
+#     forbidden_ratio: 0.3
+  
+#   # FIXED ADAPTIVE THRESHOLDS - Better balanced for alert generation
+#   adaptive_thresholds:
+#     initial_thresholds:
+#       low: 0.35      # Much lower for natural distribution
+#       medium: 0.55   # Catch enhanced threat scores
+#       high: 0.75     # High-confidence threats  
+#       critical: 0.85 # Critical threats
+    
+#     # Enhanced threshold adjustment parameters
+#     adjustment_sensitivity: 0.02
+#     target_alert_rate: 0.05
+#     calibration_window: 100
+    
+#     # Performance-based adjustment
+#     min_precision: 0.6
+#     min_recall: 0.7
+#     adjustment_rate: 0.02
+
+# # ENHANCED ALERTING - Better alert management
+# alerting:
+#   channels:
+#     slack:
+#       enabled: false
+#       webhook_url: "https://hooks.slack.com/services/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"
+#       channel: "#all-iottech"
+#     email:
+#       enabled: false
+#       smtp_server: ""
+#       smtp_port: 587
+#     webhook:
+#       enabled: false
+#       webhook_url: ""
+  
+#   # deduplication for better alert flow
+#   deduplication_window_minutes: 5  # Reduced from 20
+#   similarity_threshold: 0.7        # Reduced from 0.8
+  
+#   # rate limiting - allows more alerts
+#   adaptive_rate_limits:
+#     enabled: true
+#     target_hourly_alerts: 60        # Increased from 40
+#     burst_threshold: 8              # Increased from 5
+#     cooldown_period: 10             # Reduced from 15
+  
+#   # severity-based limits - allows more alerts
+#   rate_limits:
+#     critical:
+#       count: 15       # Increased from 10
+#       window: 3600    
+#     high:
+#       count: 30       # Increased from 25
+#       window: 3600    
+#     medium:
+#       count: 60       # Increased from 50 
+#       window: 3600    
+#     low:
+#       count: 120      # Increased from 100
+#       window: 3600    
+
+# # DATA GENERATOR - Optimized threat distribution
+# data_generator:
+#   batch_size: 60
+#   interval_seconds: 10
+#   threat_probability: 0.05    # 5% threat rate for better ML training
+  
+#   # threat patterns with better distribution
+#   threat_patterns:
+#     brute_force:
+#       probability: 0.018      # Increased slightly
+#       severity_distribution:
+#         high: 0.6
+#         critical: 0.4
+    
+#     port_scan:
+#       probability: 0.015      # Increased for more detection opportunities
+#       severity_distribution:
+#         medium: 0.5
+#         high: 0.5
+    
+#     data_exfiltration:
+#       probability: 0.010      # Increased from 0.008
+#       severity_distribution:
+#         high: 0.4
+#         critical: 0.6
+    
+#     malware_communication:
+#       probability: 0.008      # Increased from 0.006
+#       severity_distribution:
+#         high: 0.3
+#         critical: 0.7
+  
+#   # Enhanced normal traffic distribution
+#   normal_patterns:
+#     web_traffic: 0.65
+#     database_queries: 0.15
+#     file_access: 0.12
+#     dns_queries: 0.08
+
+# # ENHANCED MONITORING - Better calibration and debugging
+# monitoring:
+#   prometheus:
+#     enabled: true
+#     port: 8000
+  
+#   # ENHANCED calibration settings
+#   calibration:
+#     enabled: true
+#     interval_minutes: 3       # More frequent calibration
+#     min_samples: 30          # Reduced for faster adaptation
+    
+#     # IMPROVED alert rate targets
+#     target_rates:
+#       global: 0.05           # 5% global target
+#       critical: 0.008        # Slightly increased
+#       high: 0.018           # Increased
+#       medium: 0.022         # Increased
+#       low: 0.012            # Increased
+    
+#     # Enhanced auto-adjustment
+#     adjustment:
+#       sensitivity: 0.02
+#       max_change: 0.08      # Reduced for stability
+#       stability_window: 15   # Reduced for faster response
+  
+#   # ENHANCED performance tracking
+#   performance:
+#     track_precision: true
+#     track_recall: true
+#     track_f1_score: true
+#     track_alert_rate: true
+#     track_processing_time: true
+#     track_score_distribution: true  # NEW
+#     track_threshold_adjustments: true  # NEW
+    
+#     # IMPROVED performance thresholds
+#     thresholds:
+#       min_precision: 0.55     # Slightly reduced
+#       min_recall: 0.70
+#       max_processing_time: 5.0
+#       max_alert_rate: 0.10    # Increased from 0.08
+#       min_alert_rate: 0.02    # NEW - minimum alert rate
+
+#   # ENHANCED logging for debugging
+#   logging:
+#     level: "INFO"
+    
+#     # Enhanced logging for better debugging
+#     detailed_logging:
+#       enabled: true
+#       log_score_distributions: true
+#       log_threshold_changes: true
+#       log_alert_decisions: true
+#       log_model_performance: true
+#       log_entity_tracking: true
+    
+#     # Alert generation debugging
+#     alert_debugging:
+#       enabled: true
+#       log_all_scoring_decisions: false  # Only log when needed
+#       log_missed_alerts: true
+#       log_alert_reasons: true
+#       sample_rate: 0.1  # Log 10% of decisions for debugging
+
+# #  ALERT GENERATION RULES
+# alert_generation:
+#   # Enhanced rules for better alert coverage
+#   rules:
+#     # Rule 1: Risk-based alerting
+#     risk_based:
+#       critical_always: true
+#       high_with_confidence: 0.5  # Reduced from 0.6
+#       medium_with_confidence: 0.6
+#       medium_multi_model: true
+#       low_high_confidence: 0.8
+    
+#     # Rule 2: Score-based overrides
+#     score_overrides:
+#       high_score_threshold: 0.75
+#       multi_model_threshold: 0.35  # Reduced
+#       trend_threshold: 0.45        # Reduced
+    
+#     # Rule 3: Enhanced multi-model consensus
+#     multi_model:
+#       min_models_for_boost: 2
+#       consensus_threshold: 0.3  # Reduced
+#       confidence_boost: 0.15
+    
+#     # Rule 4: Temporal pattern detection
+#     temporal:
+#       escalating_trend_threshold: 0.5
+#       persistent_threat_window: 5
+#       new_entity_high_score: 0.7
+
+# # SYSTEM PERFORMANCE OPTIMIZATION
+# system:
+#   # Enhanced processing settings
+#   processing:
+#     batch_size: 15           # Reduced for faster processing
+#     batch_timeout: 1.5       # Reduced timeout
+#     max_entity_age_hours: 12 # Reduced for better memory management
+#     cleanup_interval: 300    # 5 minutes
+  
+#   # Memory management
+#   memory:
+#     max_entities: 10000
+#     score_history_size: 150  # Reduced
+#     alert_history_size: 100
+    
+#   # Performance tuning
+#   performance:
+#     worker_threads: 4
+#     queue_size: 1000
+#     processing_timeout: 30
+
+
+
+# FIXED SOC PLATFORM CONFIGURATION - Prevents Score Inflation & Excessive Alerts
+
 kafka:
   broker: "kafka:29092"
   topics:
@@ -6,6 +286,7 @@ kafka:
     anomaly_scores: "anomaly-scores"
     alerts: "alerts"
     model_control: "model-control"
+    model_status: "model-status"
     system_metrics: "system-metrics"
 
 clickhouse:
@@ -15,76 +296,76 @@ clickhouse:
   password: "secure_password"
   database: "soc_platform"
 
-redis:
-  host: "redis"
-  port: 6379
-  db: 0
-
-# ENHANCED ML MODELS - Better calibrated for alert generation
+# FIXED ML MODELS - Better parameter tuning
 ml_models:
   isolation_forest:
     enabled: true
-    contamination: 0.06    # Slightly increased for better detection
-    n_estimators: 200
-    max_samples: 512
+    contamination: 0.05    # FIXED: Standard 5% contamination
+    n_estimators: 150      # REDUCED: Faster training
+    max_samples: 256       # BALANCED: Good performance
     
   clustering:
     enabled: true
-    n_clusters: 8
-    max_iter: 500
-    n_init: 20
+    n_clusters: 6          # REDUCED: Better cluster separation
+    max_iter: 300          # REDUCED: Faster convergence
+    n_init: 10             # REDUCED: Faster training
     
   time_series:
-    enabled: false
-    window_size: 150
-    threshold: 2.5
+    enabled: false         # DISABLED: Avoid complexity
     
   forbidden_ratio:
     enabled: true
-    window_size: 200
+    window_size: 100       # REDUCED: More responsive
 
-# RL ORCHESTRATOR - Enhanced Configuration
+# FIXED RL ORCHESTRATOR - Conservative settings
 orchestrator:
-  learning_rate: 0.0005
-  exploration_rate: 0.15
-  decision_interval: 45
-  target_alert_rate: 0.05
+  learning_rate: 0.0003    # REDUCED: More stable learning
+  exploration_rate: 0.10   # REDUCED: Less random exploration
+  decision_interval: 60    # INCREASED: Less frequent changes
+  target_alert_rate: 0.03  # REDUCED: More conservative target
   
   model_weights:
     isolation_forest: 0.4
     clustering: 0.3
     forbidden_ratio: 0.3
 
-# ENHANCED SCORING - FIXED CONFIGURATION for better alerts
+# FIXED SCORING ENGINE - Key to preventing score inflation
 scoring:
-  aggregation_method: "adaptive_weighted"
-  target_alert_rate: 0.05  # Target 5% alert rate
+  aggregation_method: "fixed_weighted"  # CHANGED: No adaptive weighting
+  target_alert_rate: 0.03               # REDUCED: Conservative target
   
-  # IMPROVED model weights
+  # FIXED model weights (no dynamic adjustment)
   model_weights:
     isolation_forest: 0.4
     clustering: 0.3
     forbidden_ratio: 0.3
   
-  # FIXED ADAPTIVE THRESHOLDS - Better balanced for alert generation
+  # FIXED THRESHOLDS - Much higher to prevent excessive alerts
   adaptive_thresholds:
     initial_thresholds:
-      low: 0.35      # Much lower for natural distribution
-      medium: 0.55   # Catch enhanced threat scores
-      high: 0.75     # High-confidence threats  
-      critical: 0.85 # Critical threats
+      low: 0.60       # INCREASED: Was 0.35, now 0.60
+      medium: 0.75    # INCREASED: Was 0.55, now 0.75  
+      high: 0.85      # INCREASED: Was 0.75, now 0.85
+      critical: 0.92  # INCREASED: Was 0.85, now 0.92
     
-    # Enhanced threshold adjustment parameters
-    adjustment_sensitivity: 0.02
-    target_alert_rate: 0.05
-    calibration_window: 100
+    # CONSERVATIVE threshold adjustment
+    adjustment_sensitivity: 0.01  # REDUCED: Slower adjustments
+    target_alert_rate: 0.03       # REDUCED: Conservative
+    calibration_window: 200       # INCREASED: More stable
     
-    # Performance-based adjustment
-    min_precision: 0.6
-    min_recall: 0.7
-    adjustment_rate: 0.02
+    # FIXED bounds to prevent threshold drift
+    bounds:
+      low: [0.50, 0.70]      # Can only move between 50-70%
+      medium: [0.65, 0.85]   # Can only move between 65-85%
+      high: [0.80, 0.95]     # Can only move between 80-95%
+      critical: [0.90, 0.98] # Can only move between 90-98%
+    
+    # Performance-based adjustment (more conservative)
+    min_precision: 0.70     # INCREASED: Higher quality alerts
+    min_recall: 0.60        # BALANCED: Don't miss critical threats
+    adjustment_rate: 0.005  # REDUCED: Very slow adjustments
 
-# ENHANCED ALERTING - Better alert management
+# CONSERVATIVE ALERTING - Reduce alert noise
 alerting:
   channels:
     slack:
@@ -99,183 +380,237 @@ alerting:
       enabled: false
       webhook_url: ""
   
-  # REDUCED deduplication for better alert flow
-  deduplication_window_minutes: 5  # Reduced from 20
-  similarity_threshold: 0.7        # Reduced from 0.8
+  # INCREASED deduplication to reduce noise
+  deduplication_window_minutes: 15    # INCREASED: Was 5, now 15
+  similarity_threshold: 0.8           # INCREASED: Was 0.7, now 0.8
   
-  # IMPROVED rate limiting - allows more alerts
+  # STRICT rate limiting to prevent alert spam
   adaptive_rate_limits:
     enabled: true
-    target_hourly_alerts: 60        # Increased from 40
-    burst_threshold: 8              # Increased from 5
-    cooldown_period: 10             # Reduced from 15
+    target_hourly_alerts: 20          # REDUCED: Was 60, now 20
+    burst_threshold: 5                # REDUCED: Was 8, now 5
+    cooldown_period: 20               # INCREASED: Was 10, now 20
   
-  # ENHANCED severity-based limits - allows more alerts
+  # CONSERVATIVE severity-based limits
   rate_limits:
     critical:
-      count: 15       # Increased from 10
+      count: 5        # REDUCED: Was 15, now 5
       window: 3600    
     high:
-      count: 30       # Increased from 25
+      count: 10       # REDUCED: Was 30, now 10
       window: 3600    
     medium:
-      count: 60       # Increased from 50 
+      count: 20       # REDUCED: Was 60, now 20
       window: 3600    
     low:
-      count: 120      # Increased from 100
+      count: 40       # REDUCED: Was 120, now 40
       window: 3600    
 
-# ENHANCED DATA GENERATOR - Optimized threat distribution
+# CONSERVATIVE DATA GENERATOR - Reduce threat noise for testing
 data_generator:
-  batch_size: 60
-  interval_seconds: 10
-  threat_probability: 0.05    # 5% threat rate for better ML training
+  batch_size: 50              # REDUCED: Less data volume
+  interval_seconds: 15        # INCREASED: Slower generation
+  threat_probability: 0.03    # REDUCED: 3% threat rate instead of 5%
   
-  # REALISTIC threat patterns with better distribution
+  # REFINED threat patterns (more realistic)
   threat_patterns:
     brute_force:
-      probability: 0.018      # Increased slightly
+      probability: 0.012      # REDUCED: Less frequent
       severity_distribution:
-        high: 0.6
-        critical: 0.4
+        high: 0.7
+        critical: 0.3
     
     port_scan:
-      probability: 0.015      # Increased for more detection opportunities
+      probability: 0.010      # REDUCED: Less frequent
       severity_distribution:
-        medium: 0.5
-        high: 0.5
+        medium: 0.6
+        high: 0.4
     
     data_exfiltration:
-      probability: 0.010      # Increased from 0.008
+      probability: 0.005      # REDUCED: Rare but serious
+      severity_distribution:
+        high: 0.5
+        critical: 0.5
+    
+    malware_communication:
+      probability: 0.003      # REDUCED: Very rare
       severity_distribution:
         high: 0.4
         critical: 0.6
-    
-    malware_communication:
-      probability: 0.008      # Increased from 0.006
-      severity_distribution:
-        high: 0.3
-        critical: 0.7
   
-  # Enhanced normal traffic distribution
+  # NORMAL traffic distribution (more realistic)
   normal_patterns:
-    web_traffic: 0.65
+    web_traffic: 0.70         # INCREASED: Most traffic is web
     database_queries: 0.15
-    file_access: 0.12
-    dns_queries: 0.08
+    file_access: 0.10
+    dns_queries: 0.05
 
-# ENHANCED MONITORING - Better calibration and debugging
+# FIXED MONITORING - Better score tracking
 monitoring:
   prometheus:
     enabled: true
     port: 8000
   
-  # ENHANCED calibration settings
+  # CONSERVATIVE calibration settings
   calibration:
     enabled: true
-    interval_minutes: 3       # More frequent calibration
-    min_samples: 30          # Reduced for faster adaptation
+    interval_minutes: 10      # INCREASED: Less frequent
+    min_samples: 100          # INCREASED: More stable
     
-    # IMPROVED alert rate targets
+    # CONSERVATIVE alert rate targets
     target_rates:
-      global: 0.05           # 5% global target
-      critical: 0.008        # Slightly increased
-      high: 0.018           # Increased
-      medium: 0.022         # Increased
-      low: 0.012            # Increased
+      global: 0.03           # REDUCED: 3% global target
+      critical: 0.003        # REDUCED: Very rare
+      high: 0.008           # REDUCED: Rare
+      medium: 0.015         # REDUCED: Uncommon
+      low: 0.005            # REDUCED: Rare
     
-    # Enhanced auto-adjustment
+    # CONSERVATIVE auto-adjustment
     adjustment:
-      sensitivity: 0.02
-      max_change: 0.08      # Reduced for stability
-      stability_window: 15   # Reduced for faster response
+      sensitivity: 0.005      # REDUCED: Very slow
+      max_change: 0.03        # REDUCED: Small changes
+      stability_window: 30    # INCREASED: More stability
   
-  # ENHANCED performance tracking
+  # ENHANCED performance tracking with score inflation detection
   performance:
     track_precision: true
     track_recall: true
     track_f1_score: true
     track_alert_rate: true
     track_processing_time: true
-    track_score_distribution: true  # NEW
-    track_threshold_adjustments: true  # NEW
+    track_score_distribution: true    # IMPORTANT: Monitor for inflation
+    track_threshold_adjustments: true
+    track_score_inflation: true       # NEW: Monitor score drift
     
-    # IMPROVED performance thresholds
+    # FIXED performance thresholds
     thresholds:
-      min_precision: 0.55     # Slightly reduced
-      min_recall: 0.70
-      max_processing_time: 5.0
-      max_alert_rate: 0.10    # Increased from 0.08
-      min_alert_rate: 0.02    # NEW - minimum alert rate
+      min_precision: 0.70             # INCREASED: Higher quality
+      min_recall: 0.60                # BALANCED: Don't miss threats
+      max_processing_time: 3.0        # REDUCED: Faster processing
+      max_alert_rate: 0.05            # REDUCED: Less alerts
+      min_alert_rate: 0.01            # INCREASED: Some alerts needed
+      max_mean_score: 0.6             # NEW: Detect score inflation
+      max_p95_score: 0.9              # NEW: Detect score saturation
 
-  # ENHANCED logging for debugging
+  # ENHANCED logging for debugging score issues
   logging:
     level: "INFO"
     
-    # Enhanced logging for better debugging
+    # Score debugging (critical for fixing inflation)
     detailed_logging:
       enabled: true
-      log_score_distributions: true
+      log_score_distributions: true   # IMPORTANT: See score patterns
       log_threshold_changes: true
       log_alert_decisions: true
       log_model_performance: true
       log_entity_tracking: true
+      log_score_normalization: true   # NEW: Track normalization
     
     # Alert generation debugging
     alert_debugging:
       enabled: true
-      log_all_scoring_decisions: false  # Only log when needed
+      log_all_scoring_decisions: false
       log_missed_alerts: true
       log_alert_reasons: true
-      sample_rate: 0.1  # Log 10% of decisions for debugging
+      log_score_inflation_warnings: true  # NEW: Track inflation
+      sample_rate: 0.05  # REDUCED: 5% sampling
 
-#  ALERT GENERATION RULES
+# FIXED ALERT GENERATION RULES - Much more conservative
 alert_generation:
-  # Enhanced rules for better alert coverage
   rules:
-    # Rule 1: Risk-based alerting
+    # CONSERVATIVE risk-based alerting
     risk_based:
       critical_always: true
-      high_with_confidence: 0.5  # Reduced from 0.6
-      medium_with_confidence: 0.6
-      medium_multi_model: true
-      low_high_confidence: 0.8
+      high_with_confidence: 0.80      # INCREASED: Need high confidence
+      medium_with_confidence: 0.85    # INCREASED: Very high confidence
+      medium_multi_model: true        # Require multiple models
+      low_high_confidence: 0.95       # VERY high confidence needed
     
-    # Rule 2: Score-based overrides
+    # CONSERVATIVE score-based overrides
     score_overrides:
-      high_score_threshold: 0.75
-      multi_model_threshold: 0.35  # Reduced
-      trend_threshold: 0.45        # Reduced
+      high_score_threshold: 0.90      # INCREASED: Very high scores only
+      multi_model_threshold: 0.70     # INCREASED: High threshold
+      trend_threshold: 0.80           # INCREASED: Strong trend needed
     
-    # Rule 3: Enhanced multi-model consensus
+    # STRICT multi-model consensus
     multi_model:
-      min_models_for_boost: 2
-      consensus_threshold: 0.3  # Reduced
-      confidence_boost: 0.15
+      min_models_for_boost: 3         # INCREASED: Need more models
+      consensus_threshold: 0.60       # INCREASED: Higher consensus
+      confidence_boost: 0.10          # REDUCED: Less boost
     
-    # Rule 4: Temporal pattern detection
+    # CONSERVATIVE temporal pattern detection
     temporal:
-      escalating_trend_threshold: 0.5
-      persistent_threat_window: 5
-      new_entity_high_score: 0.7
+      escalating_trend_threshold: 0.75  # INCREASED: Strong trend
+      persistent_threat_window: 10      # INCREASED: Longer window
+      new_entity_high_score: 0.85       # INCREASED: Very high scores
 
-# SYSTEM PERFORMANCE OPTIMIZATION
+# OPTIMIZED SYSTEM PERFORMANCE
 system:
-  # Enhanced processing settings
   processing:
-    batch_size: 15           # Reduced for faster processing
-    batch_timeout: 1.5       # Reduced timeout
-    max_entity_age_hours: 12 # Reduced for better memory management
-    cleanup_interval: 300    # 5 minutes
+    batch_size: 20           # INCREASED: Better efficiency
+    batch_timeout: 3.0       # INCREASED: Less frequent processing
+    max_entity_age_hours: 24 # INCREASED: Keep data longer
+    cleanup_interval: 600    # INCREASED: 10 minutes
   
-  # Memory management
+  # CONSERVATIVE memory management
   memory:
-    max_entities: 10000
-    score_history_size: 150  # Reduced
-    alert_history_size: 100
+    max_entities: 5000       # REDUCED: Less memory usage
+    score_history_size: 50   # REDUCED: Smaller history
+    alert_history_size: 50   # REDUCED: Smaller history
     
-  # Performance tuning
+  # BALANCED performance tuning
   performance:
-    worker_threads: 4
-    queue_size: 1000
-    processing_timeout: 30
+    worker_threads: 2        # REDUCED: Less parallelism
+    queue_size: 500          # REDUCED: Smaller queues
+    processing_timeout: 45   # INCREASED: More time for processing
+
+# NEW: SCORE NORMALIZATION SETTINGS (for fixed scoring engine)
+score_normalization:
+  enabled: true
+  
+  # Reference points for each model (prevents drift)
+  reference_points:
+    isolation_forest:
+      min: -0.5
+      max: 0.5
+      baseline: 0.0
+    clustering:
+      min: 0.0
+      max: 3.0
+      baseline: 1.0
+    forbidden_ratio:
+      min: 0.0
+      max: 1.0
+      baseline: 0.1
+  
+  # Cooling settings (prevents score inflation)
+  cooling:
+    enabled: true
+    cooling_rate: 0.995        # 0.5% cooling per minute
+    high_score_threshold: 0.7  # Start cooling above 70%
+    emergency_cooling: 0.5     # 50% emergency reduction
+  
+  # Inflation detection
+  inflation_detection:
+    enabled: true
+    mean_threshold: 0.6        # Alert if mean score > 60%
+    p95_threshold: 0.9         # Alert if 95th percentile > 90%
+    trend_window: 100          # Monitor last 100 scores
+    
+# NEW: DASHBOARD VISUALIZATION SETTINGS
+dashboard:
+  score_visualization:
+    y_axis_max: 1.0           # Fixed Y-axis scale
+    y_axis_min: 0.0
+    auto_scale: false         # Don't auto-scale (prevents confusion)
+    
+  # Alert visualization
+  alert_chart:
+    max_alerts_display: 100   # Limit chart size
+    time_window_hours: 24     # Show last 24 hours
+    
+  # Score distribution
+  score_distribution:
+    bins: 20                  # 20 bins for histogram
+    expected_mean: 0.3        # Expected healthy mean
+    expected_p95: 0.8         # Expected healthy P95
