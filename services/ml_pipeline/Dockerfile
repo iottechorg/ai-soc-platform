@@ -3,8 +3,8 @@ FROM soc-platform-base:latest
 
 WORKDIR /app
 
-COPY ./services/ml_pipeline/requirements-ml.txt .
-RUN pip install --no-cache-dir -r requirements-ml.txt
+COPY ./services/ml_pipeline/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY ./services/shared ./shared

@@ -4,10 +4,8 @@ FROM soc-platform-base:latest
 WORKDIR /app
 
 # Install dependencies
-COPY ./services/orchestrator/requirements-ml.txt .
-COPY ./services/orchestrator/requirements-rl.txt .
-RUN pip install --no-cache-dir -r requirements-ml.txt
-RUN pip install --no-cache-dir -r requirements-rl.txt
+COPY ./services/orchestrator/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 
 # Copy application code
